@@ -9,12 +9,6 @@ import (
 type View struct {
 }
 
-type Model struct {
-}
-
-type ModelVersion struct {
-}
-
 type Project struct {
 	Name   string
 	Server *Server
