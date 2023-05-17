@@ -43,37 +43,36 @@ func (s *Server) listProjects() []string {
 }
 
 func (s *Server) GetDatabase(name string) (*Database, error) {
-	names := s.listDatabases()
-	for _, n := range names {
-		if n == name {
-			return NewDatabase(s, name), nil
-		}
-	}
-	return nil, fmt.Errorf("database doesn't exist")
+	query := fmt.Sprintf(`SHOW TABLES FROM %s;`, name)
+	data, _, err := s.Api.SqlQuery(s.Api.Session, query, "", true)
+	database := Database{Name: name, Api: s.Api, Server: s, Tables: data}
+	HandleError(err)
+	return &database, nil
 }
 
 func (s *Server) ListProjects() []*Project {
 	names := s.listProjects()
 	projects := make([]*Project, len(names))
 	for i, name := range names {
-		projects[i] = NewProject(s, name)
+		projects[i] = &Project{Name: name, Api: s.Api, Server: s}
 	}
 	return projects
 }
 
 func (s *Server) CreateProject(name string) (*Project, error) {
-	return NewProject(s, name), nil
+	return NewProject(s, name, "mindsdb", map[string]string{}), nil
 }
 
-func (s *Server) DropProject(name string) {
+func (s *Server) DropProject(name string) string {
+	query := fmt.Sprintf(`DROP DATABASE %s;`, name)
+	_, _, err := s.Api.SqlQuery(s.Api.Session, query, "", true)
+	HandleError(err)
+	return "Database deleted successfully"
 }
 
 func (s *Server) GetProject(name string) (*Project, error) {
-	names := s.ListProjects()
-	for _, n := range names {
-		if n.Name == name {
-			return NewProject(s, name), nil
-		}
-	}
-	return nil, fmt.Errorf("project doesn't exist")
+	database, err := s.GetDatabase(name)
+	project := &Project{Name: database.Name, Server: s, Api: s.Api}
+	HandleError(err)
+	return project, nil
 }

@@ -7,8 +7,9 @@ import (
 )
 
 type Database struct {
-	Server *Server
 	Name   string
+	Tables []connectors.Record
+	Server *Server
 	Api    *connectors.RestAPI
 }
 
@@ -17,6 +18,7 @@ func NewDatabase(server *Server, name string) *Database {
 		Server: server,
 		Name:   name,
 		Api:    server.Api,
+        Tables: []connectors.Record{},
 	}
 }
 
