@@ -20,6 +20,10 @@ type RestAPI struct {
 	Session  *http.Client
 }
 
+type Record struct {
+	Fields []string
+}
+
 type Response struct {
 	Type  string      `json:"type"`
 	Error string      `json:"error_message"`
@@ -70,13 +74,13 @@ func (api *RestAPI) Login() (RestAPI, error) {
 		Name:  "session",
 		Value: session_id,
 	}
-	client := &http.Client{Timeout: time.Second * 10, Jar: jar}
+	client := &http.Client{Timeout: time.Second * 60, Jar: jar}
 	client.Jar.SetCookies(api.Url, []*http.Cookie{cookie})
 	api.Session = client
 	return *api, nil
 }
 
-func (api *RestAPI) SqlQuery(session *http.Client, sql string, database string, lowercaseColumns bool) (data [][]interface{}, columns []string, err error) {
+func (api *RestAPI) SqlQuery(session *http.Client, sql string, database string, lowercaseColumns bool) (data []Record, columns []string, err error) {
 	if database == "" {
 		database = "mindsdb"
 	}
@@ -103,7 +107,7 @@ func (api *RestAPI) SqlQuery(session *http.Client, sql string, database string, 
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
-	log.Println("body: ", string(body))
+	//log.Println("body: ", string(body))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -117,21 +121,7 @@ func (api *RestAPI) SqlQuery(session *http.Client, sql string, database string, 
 		return nil, nil, err
 	}
 
-	if dataArr, ok := result["data"].([]interface{}); ok {
-		for _, row := range dataArr {
-			if rowMap, ok := row.(map[string]interface{}); ok {
-				rowData := make([]interface{}, len(rowMap))
-				i := 0
-				for _, value := range rowMap {
-					rowData[i] = value
-					i++
-				}
-				data = append(data, rowData)
-			}
-		}
-	}
-
-	if columnsArr, ok := result["columns"].([]interface{}); ok {
+	if columnsArr, ok := result["column_names"].([]interface{}); ok {
 		for _, column := range columnsArr {
 			if columnStr, ok := column.(string); ok {
 				if lowercaseColumns {
@@ -143,5 +133,21 @@ func (api *RestAPI) SqlQuery(session *http.Client, sql string, database string, 
 		}
 	}
 
-	return data, columns, nil
+	var records []Record
+	if dataArr, ok := result["data"].([]interface{}); ok {
+		for _, row := range dataArr {
+			if rowMap, ok := row.([]interface{}); ok {
+				record := Record{
+					Fields: make([]string, len(columns)),
+				}
+				for j, value := range rowMap {
+					if strValue, ok := value.(string); ok {
+						record.Fields[j] = strValue
+					}
+				}
+				records = append(records, record)
+			}
+		}
+	}
+	return records, columns, nil
 }
