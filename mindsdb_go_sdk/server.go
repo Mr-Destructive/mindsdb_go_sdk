@@ -36,7 +36,7 @@ func (s *Server) listProjects() []string {
 	var projects []string
 	for _, project := range data {
 		for column_idx, _ := range columns {
-			projects = append(projects, project.Fields[column_idx])
+			projects = append(projects, project.Fields[column_idx].(string))
 		}
 	}
 	return projects

@@ -21,7 +21,7 @@ type RestAPI struct {
 }
 
 type Record struct {
-	Fields []string
+	Fields []interface{}
 }
 
 type Response struct {
@@ -138,12 +138,10 @@ func (api *RestAPI) SqlQuery(session *http.Client, sql string, database string, 
 		for _, row := range dataArr {
 			if rowMap, ok := row.([]interface{}); ok {
 				record := Record{
-					Fields: make([]string, len(columns)),
+					Fields: make([]interface{}, len(columns)),
 				}
 				for j, value := range rowMap {
-					if strValue, ok := value.(string); ok {
-						record.Fields[j] = strValue
-					}
+					record.Fields[j] = value
 				}
 				records = append(records, record)
 			}
