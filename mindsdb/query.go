@@ -1,7 +1,7 @@
 package mindsdb
 
 import (
-	"mindsdb/connectors"
+	"github.com/mr-destructive/mindsdb_go_sdk/mindsdb/connectors"
 )
 
 type Query struct {

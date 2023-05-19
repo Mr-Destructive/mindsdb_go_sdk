@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"mindsdb/connectors"
+	"github.com/mr-destructive/mindsdb_go_sdk/mindsdb/connectors"
 	"strings"
 )
 

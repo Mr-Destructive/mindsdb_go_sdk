@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/mr-destructive/mindsdb_go_sdk/mindsdb"
+	"github.com/mr-destructive/mindsdb_go_sdk/mindsdb/connectors"
 	"log"
-	"mindsdb"
-	"mindsdb/connectors"
 	"net/http"
 	"net/url"
 	"os"
@@ -33,8 +33,7 @@ func main() {
 	logged_session := req.Session
 	_, _, err = api.SqlQuery(logged_session, "SELECT NAME FROM models;", "", true)
 	HandleError(err)
-	server := mindsdb.Server{}
-	server = *server.NewServer(&api)
+	server := mindsdb.Server{Api: &api}
 	projects := server.ListProjects()
 	for _, project := range projects {
 		fmt.Println(project.Name)

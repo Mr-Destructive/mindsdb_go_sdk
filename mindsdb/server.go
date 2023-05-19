@@ -2,7 +2,7 @@ package mindsdb
 
 import (
 	"fmt"
-	"mindsdb/connectors"
+	"github.com/mr-destructive/mindsdb_go_sdk/mindsdb/connectors"
 )
 
 type Server struct {
