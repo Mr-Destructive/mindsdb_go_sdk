@@ -1,8 +1,8 @@
-package mindsdb_go_sdk
+package mindsdb
 
 import (
 	"fmt"
-	"mindsdb_go_sdk/connectors"
+	"mindsdb/connectors"
 )
 
 type Server struct {

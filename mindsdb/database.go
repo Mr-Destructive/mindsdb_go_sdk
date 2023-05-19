@@ -1,8 +1,8 @@
-package mindsdb_go_sdk
+package mindsdb
 
 import (
 	"fmt"
-	"mindsdb_go_sdk/connectors"
+	"mindsdb/connectors"
 	"strings"
 )
 
@@ -18,7 +18,7 @@ func NewDatabase(server *Server, name string) *Database {
 		Server: server,
 		Name:   name,
 		Api:    server.Api,
-        Tables: []connectors.Record{},
+		Tables: []connectors.Record{},
 	}
 }
 

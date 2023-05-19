@@ -1,7 +1,7 @@
-package mindsdb_go_sdk
+package mindsdb
 
 import (
-	"mindsdb_go_sdk/connectors"
+	"mindsdb/connectors"
 )
 
 type Query struct {
