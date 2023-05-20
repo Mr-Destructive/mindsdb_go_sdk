@@ -39,31 +39,40 @@ func getSessionId(resp *http.Response) string {
 	return ""
 }
 
-func (api *RestAPI) Login() (RestAPI, error) {
+func Login(email, password string) (*RestAPI, error) {
+	api := RestAPI{}
+	apiUrl, err := url.Parse("https://cloud.mindsdb.com")
+	api.Url = apiUrl
+	api.Email = email
+	api.Password = password
+
 	jsonStr, _ := json.Marshal(map[string]string{
 		"email":    api.Email,
 		"password": api.Password,
 	})
+	api.Session = &http.Client{
+		Timeout: time.Second * 10,
+	}
 	empty_api := RestAPI{}
 	url := fmt.Sprintf("%s/cloud/login", api.Url.String())
 	req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(string(jsonStr)))
 	if err != nil {
-		return empty_api, err
+		return &empty_api, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := api.Session.Do(req)
 	if err != nil {
-		return empty_api, err
+		return &empty_api, err
 	}
 	var r Response
 	err = json.NewDecoder(resp.Body).Decode(&r)
 	if err != nil {
-		return empty_api, err
+		return &empty_api, err
 	}
 	session_id := getSessionId(resp)
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return empty_api, fmt.Errorf("Login failed: %s", resp.Status)
+		return &empty_api, fmt.Errorf("Login failed: %s", resp.Status)
 	}
 
 	jar, err := cookiejar.New(nil)
@@ -77,7 +86,7 @@ func (api *RestAPI) Login() (RestAPI, error) {
 	client := &http.Client{Timeout: time.Second * 60, Jar: jar}
 	client.Jar.SetCookies(api.Url, []*http.Cookie{cookie})
 	api.Session = client
-	return *api, nil
+	return &api, nil
 }
 
 func (api *RestAPI) SqlQuery(session *http.Client, sql string, database string, lowercaseColumns bool) (data []Record, columns []string, err error) {

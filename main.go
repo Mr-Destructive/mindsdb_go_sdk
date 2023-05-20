@@ -5,10 +5,7 @@ import (
 	"github.com/mr-destructive/mindsdb_go_sdk/mindsdb"
 	"github.com/mr-destructive/mindsdb_go_sdk/mindsdb/connectors"
 	"log"
-	"net/http"
-	"net/url"
 	"os"
-	"time"
 )
 
 func HandleError(err error) {
@@ -18,22 +15,17 @@ func HandleError(err error) {
 }
 
 func main() {
-	api := connectors.RestAPI{}
-	apiUrl, err := url.Parse("https://cloud.mindsdb.com")
-	api.Url = apiUrl
-	err = mindsdb.LoadEnvFromFile(".env")
-	api.Email = os.Getenv("email")
-	api.Password = os.Getenv("password")
-	session := &http.Client{
-		Timeout: time.Second * 10,
-	}
-	api.Session = session
-	req, err := api.Login()
+	err := mindsdb.LoadEnvFromFile(".env")
+	email := os.Getenv("email")
+	password := os.Getenv("password")
+
+	api, err := connectors.Login(email, password)
+
 	HandleError(err)
-	logged_session := req.Session
+	logged_session := api.Session
 	_, _, err = api.SqlQuery(logged_session, "SELECT NAME FROM models;", "", true)
 	HandleError(err)
-	server := mindsdb.Server{Api: &api}
+	server := mindsdb.Server{Api: api}
 	projects := server.ListProjects()
 	for _, project := range projects {
 		fmt.Println(project.Name)
