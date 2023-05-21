@@ -5,9 +5,10 @@ import (
 )
 
 type Query struct {
-	Api    *connectors.RestAPI
-	Sql    string
-	DBName string
+	Api       *connectors.RestAPI
+	Sql       string
+	DBName    string
+	ResultSet ResultSet
 }
 
 func MindsDBClient(baseURL string) *connectors.RestAPI {

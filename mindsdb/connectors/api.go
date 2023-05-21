@@ -24,6 +24,11 @@ type Record struct {
 	Fields []interface{}
 }
 
+type ColumnType struct {
+	ColumnName string
+	ColumnType string
+}
+
 type Response struct {
 	Type  string      `json:"type"`
 	Error string      `json:"error_message"`
@@ -89,7 +94,7 @@ func Login(email, password string) (*RestAPI, error) {
 	return &api, nil
 }
 
-func (api *RestAPI) SqlQuery(session *http.Client, sql string, database string, lowercaseColumns bool) (data []Record, columns []string, err error) {
+func (api *RestAPI) SqlQuery(session *http.Client, sql string, database string, lowercaseColumns bool) (data []Record, columns []ColumnType, err error) {
 	if database == "" {
 		database = "mindsdb"
 	}
@@ -130,13 +135,14 @@ func (api *RestAPI) SqlQuery(session *http.Client, sql string, database string, 
 		return nil, nil, err
 	}
 
+	var columnNames []string
 	if columnsArr, ok := result["column_names"].([]interface{}); ok {
 		for _, column := range columnsArr {
 			if columnStr, ok := column.(string); ok {
 				if lowercaseColumns {
-					columns = append(columns, strings.ToLower(columnStr))
+					columnNames = append(columnNames, strings.ToLower(columnStr))
 				} else {
-					columns = append(columns, columnStr)
+					columnNames = append(columnNames, columnStr)
 				}
 			}
 		}
@@ -144,13 +150,17 @@ func (api *RestAPI) SqlQuery(session *http.Client, sql string, database string, 
 
 	var records []Record
 	if dataArr, ok := result["data"].([]interface{}); ok {
-		for _, row := range dataArr {
+		for i, row := range dataArr {
 			if rowMap, ok := row.([]interface{}); ok {
 				record := Record{
 					Fields: make([]interface{}, len(columns)),
 				}
 				for j, value := range rowMap {
-					record.Fields[j] = value
+					record.Fields = append(record.Fields, value)
+					if i == 0 {
+						col := ColumnType{ColumnName: columnNames[j], ColumnType: fmt.Sprintf("%T", record.Fields[j])}
+						columns = append(columns, col)
+					}
 				}
 				records = append(records, record)
 			}

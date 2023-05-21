@@ -2,6 +2,7 @@ package mindsdb
 
 import (
 	"fmt"
+
 	"github.com/mr-destructive/mindsdb_go_sdk/mindsdb/connectors"
 )
 
@@ -15,14 +16,13 @@ func NewServer(api *connectors.RestAPI) *Server {
 	}
 }
 
-func (s *Server) ListDatabases() []string {
+func (s *Server) ListDatabases() []connectors.ColumnType {
 	_, columns, err := s.Api.SqlQuery(s.Api.Session,
 		"SELECT NAME FROM information_schema.databases",
 		"information_schema.databases",
 		true,
 	)
 	if err != nil {
-		// Handle the error appropriately
 		return nil
 	}
 	return columns
@@ -41,7 +41,9 @@ func (s *Server) ListProjects() []*Project {
 	var projects []*Project
 	for _, project := range data {
 		for _, field := range project.Fields {
-			projects = append(projects, &Project{Name: field.(string), Api: s.Api, Server: s})
+			if field != nil {
+				projects = append(projects, &Project{Name: field.(string), Api: s.Api, Server: s})
+			}
 		}
 	}
 	return projects

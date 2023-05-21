@@ -37,9 +37,14 @@ func NewProject(server *Server, name string, engine string, params map[string]st
 	}
 }
 
-func (p *Project) Query(sql string) *Query {
-	// Execute query and return Query object
-	return &Query{}
+func (p *Project) Query(sql, database string) *Query {
+	if database == "" {
+		database = "mndsdb"
+	}
+	data, column, err := p.Api.SqlQuery(p.Api.Session, sql, database, true)
+	HandleError(err)
+	resultSet := ResultSet{Columns: column, Rows: data}
+	return &Query{Api: p.Api, Sql: sql, DBName: database, ResultSet: resultSet}
 }
 
 func (p *Project) NewModel(modelName string, predictColumn string, engine string, params map[string]string) (*Model, error) {
