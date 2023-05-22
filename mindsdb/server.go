@@ -1,7 +1,14 @@
 package mindsdb
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+	"net/http/cookiejar"
+	"net/url"
+	"strings"
+	"time"
 
 	"github.com/mr-destructive/mindsdb_go_sdk/mindsdb/connectors"
 )
@@ -14,6 +21,63 @@ func NewServer(api *connectors.RestAPI) *Server {
 	return &Server{
 		Api: api,
 	}
+}
+
+func Connect(apiUrl, email, password string) (*connectors.RestAPI, error) {
+	api := connectors.RestAPI{}
+	hostUrl := apiUrl
+	if apiUrl == "" {
+		hostUrl = "https://cloud.mindsdb.com"
+	}
+	Url, err := url.Parse(hostUrl)
+	if err != nil {
+		HandleError(err)
+	}
+	api.Url = Url
+	api.Email = email
+	api.Password = password
+
+	jsonStr, _ := json.Marshal(map[string]string{
+		"email":    api.Email,
+		"password": api.Password,
+	})
+	api.Session = &http.Client{
+		Timeout: time.Second * 10,
+	}
+	empty_api := connectors.RestAPI{}
+	url := fmt.Sprintf("%s/cloud/login", api.Url.String())
+	req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(string(jsonStr)))
+	if err != nil {
+		return &empty_api, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := api.Session.Do(req)
+	if err != nil {
+		return &empty_api, err
+	}
+	var r connectors.Response
+	err = json.NewDecoder(resp.Body).Decode(&r)
+	if err != nil {
+		return &empty_api, err
+	}
+	session_id := connectors.GetSessionId(resp)
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return &empty_api, fmt.Errorf("Login failed: %s", resp.Status)
+	}
+
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	cookie := &http.Cookie{
+		Name:  "session",
+		Value: session_id,
+	}
+	client := &http.Client{Timeout: time.Second * 60, Jar: jar}
+	client.Jar.SetCookies(api.Url, []*http.Cookie{cookie})
+	api.Session = client
+	return &api, nil
 }
 
 func (s *Server) ListDatabases() []connectors.ColumnType {

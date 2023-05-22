@@ -35,7 +35,7 @@ type Response struct {
 	Data  interface{} `json:"data"`
 }
 
-func getSessionId(resp *http.Response) string {
+func GetSessionId(resp *http.Response) string {
 	for _, cookie := range resp.Cookies() {
 		if cookie.Name == "session" {
 			return cookie.Value
@@ -74,7 +74,7 @@ func Login(email, password string) (*RestAPI, error) {
 	if err != nil {
 		return &empty_api, err
 	}
-	session_id := getSessionId(resp)
+	session_id := GetSessionId(resp)
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return &empty_api, fmt.Errorf("Login failed: %s", resp.Status)

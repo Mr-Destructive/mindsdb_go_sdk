@@ -20,6 +20,7 @@ func main() {
 	password := os.Getenv("password")
 
 	api, err := connectors.Login(email, password)
+	//api, err = mindsdb.Connect("https://cloud.mindsdb.com", email, password)
 
 	HandleError(err)
 	logged_session := api.Session
