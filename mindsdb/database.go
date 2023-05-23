@@ -2,8 +2,9 @@ package mindsdb
 
 import (
 	"fmt"
-	"github.com/mr-destructive/mindsdb_go_sdk/mindsdb/connectors"
 	"strings"
+
+	"github.com/mr-destructive/mindsdb_go_sdk/mindsdb/connectors"
 )
 
 type Database struct {
@@ -26,13 +27,37 @@ func (d *Database) String() string {
 	return ""
 }
 
-func (d *Database) DBQuery(sql string) *Query {
-	return NewQuery(d.Api, sql, d.Name)
+func (d *Database) Query(sql string) (*Query, error) {
+	body, err := connectors.PostQuery(*d.Api, d.Name, sql)
+	if err != nil {
+		return &Query{}, nil
+	}
+	rows, columns, err := connectors.ReadRowColumns(body)
+	if err != nil {
+		return &Query{}, nil
+	}
+	return &Query{
+		Api:       d.Api,
+		Sql:       sql,
+		DBName:    d.Name,
+		ResultSet: ResultSet{Rows: rows, Columns: columns},
+	}, nil
 }
 
 func (d *Database) listTables() []string {
-	// Retrieve list of table names
-	return []string{}
+	query := fmt.Sprintf("SHOW TABLES FROM %s;", d.Name)
+	data, _, err := d.Api.SqlQuery(d.Api.Session, query, "", true)
+	var tables []string
+	HandleError(err)
+	for _, table := range data {
+		for _, field := range table.Fields {
+			if field != nil {
+				tables = append(tables, field.(string))
+			}
+		}
+	}
+
+	return tables
 }
 
 func (d *Database) ListTables() []*Table {
@@ -52,7 +77,6 @@ func (d *Database) GetTable(name string) (*Table, error) {
 		}
 	}
 	if !strings.Contains(name, ".") {
-		// fixme: schemas not visible in 'show tables'
 		return nil, fmt.Errorf("table doesn't exist")
 	}
 	return NewTable(d, name), nil
@@ -62,16 +86,13 @@ func (d *Database) CreateTable(name string, query *Query, replace bool) (*Table,
 	if query == nil {
 		return nil, fmt.Errorf("query is nil")
 	}
-	// Create or replace table based on the query
 	return NewTable(d, name), nil
 }
 
 type Table struct {
-	// Table fields
+	Name string
 }
 
 func NewTable(database *Database, name string) *Table {
-	return &Table{
-		// Initialize Table fields
-	}
+	return &Table{Name: name}
 }

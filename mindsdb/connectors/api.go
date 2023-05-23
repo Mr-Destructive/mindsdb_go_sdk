@@ -98,52 +98,57 @@ func (api *RestAPI) SqlQuery(session *http.Client, sql string, database string, 
 	if database == "" {
 		database = "mindsdb"
 	}
+	body, err := PostQuery(*api, database, sql)
+	return ReadRowColumns(body)
+}
+
+func PostQuery(api RestAPI, database, sql string) ([]byte, error) {
+
 	url := fmt.Sprintf("%s/api/sql/query", api.Url.String())
-	jsonStr, _ := json.Marshal(map[string]interface{}{
+	jsonStr, err := json.Marshal(map[string]interface{}{
 		"query":   sql,
 		"context": map[string]string{"db": database},
 	})
 
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	client := session
+	client := api.Session
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
-	//log.Println("body: ", string(body))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, nil, fmt.Errorf("API call failed with status code %d", resp.StatusCode)
+		return nil, fmt.Errorf("API call failed with status code %d", resp.StatusCode)
 	}
+	return body, nil
+}
+
+func ReadRowColumns(body []byte) (data []Record, columns []ColumnType, err error) {
+
 	var result map[string]interface{}
 	err = json.Unmarshal(body, &result)
 	if err != nil {
 		return nil, nil, err
 	}
-
 	var columnNames []string
 	if columnsArr, ok := result["column_names"].([]interface{}); ok {
 		for _, column := range columnsArr {
 			if columnStr, ok := column.(string); ok {
-				if lowercaseColumns {
-					columnNames = append(columnNames, strings.ToLower(columnStr))
-				} else {
-					columnNames = append(columnNames, columnStr)
-				}
+				columnNames = append(columnNames, strings.ToLower(columnStr))
 			}
 		}
 	}

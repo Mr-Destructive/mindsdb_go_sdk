@@ -35,6 +35,13 @@ func main() {
 	HandleError(err)
 	query := project.Query("SELECT * FROM test_sdk.models WHERE name='model_b';", "")
 	fmt.Println(query.ResultSet.Columns)
+	db, _ := server.GetDatabase("test_sdk")
+	//fmt.Println(db.Tables)
+	//data, _ := db.Query("SELECT * FROM models WHERE name='model_dj'")
+	//fmt.Println(data)
+	for _, table := range db.ListTables() {
+		fmt.Println(table.Name)
+	}
 	/*
 			params := map[string]string{"user": "abc", "password": "abc"}
 			new_project := mindsdb_go_sdk.NewProject(&server, "test_sdk", "mindsdb", params)
