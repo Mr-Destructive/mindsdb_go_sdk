@@ -8,13 +8,22 @@ import (
 	"strings"
 )
 
-type View struct {
-}
-
 type Project struct {
 	Name   string
 	Server *Server
 	Api    *connectors.RestAPI
+}
+
+type View struct {
+	Sql  string
+	Name string
+}
+
+func (project *Project) NewView(name string, sql string) *View {
+	query := fmt.Sprintf("CREATE VIEW %s.%s (%s);", project.Name, name, sql)
+	_, err := project.Query(query, project.Name)
+	HandleError(err)
+	return &View{Sql: sql, Name: name}
 }
 
 func NewProject(server *Server, name string, engine string, params map[string]string) *Project {
@@ -37,14 +46,16 @@ func NewProject(server *Server, name string, engine string, params map[string]st
 	}
 }
 
-func (p *Project) Query(sql, database string) *Query {
+func (p *Project) Query(sql, database string) (*Query, error) {
 	if database == "" {
 		database = "mndsdb"
 	}
 	data, column, err := p.Api.SqlQuery(p.Api.Session, sql, database, true)
-	HandleError(err)
+	if err != nil {
+		return &Query{}, err
+	}
 	resultSet := ResultSet{Columns: column, Rows: data}
-	return &Query{Api: p.Api, Sql: sql, DBName: database, ResultSet: resultSet}
+	return &Query{Api: p.Api, Sql: sql, DBName: database, ResultSet: resultSet}, nil
 }
 
 func (p *Project) NewModel(modelName string, predictColumn string, engine string, params map[string]string) (*Model, error) {
@@ -139,4 +150,8 @@ func (p *Project) DropModel(name string) string {
 	_, _, err := p.Api.SqlQuery(p.Api.Session, query, "", true)
 	HandleError(err)
 	return "Model deleted successfully"
+}
+
+func (project *Project) ListViews() ([]View, error) {
+	return []View{}, nil
 }
