@@ -173,3 +173,40 @@ func ReadRowColumns(body []byte) (data []Record, columns []ColumnType, err error
 	}
 	return records, columns, nil
 }
+
+func (api *RestAPI) APIRequest(requestUrl, method string, body map[string]string) (map[string]interface{}, error) {
+	jsonStr, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(method, requestUrl, bytes.NewBuffer(jsonStr))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := api.Session
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API call failed with status code %d", resp.StatusCode)
+	}
+
+	var result map[string]interface{}
+	err = json.Unmarshal(respBody, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

@@ -15,15 +15,16 @@ type Project struct {
 }
 
 type View struct {
-	Sql  string
-	Name string
+	Project *Project
+	Sql     string
+	Name    string
 }
 
 func (project *Project) NewView(name string, sql string) *View {
 	query := fmt.Sprintf("CREATE VIEW %s.%s (%s);", project.Name, name, sql)
 	_, err := project.Query(query, project.Name)
 	HandleError(err)
-	return &View{Sql: sql, Name: name}
+	return &View{Project: project, Sql: sql, Name: name}
 }
 
 func NewProject(server *Server, name string, engine string, params map[string]string) *Project {
@@ -152,6 +153,20 @@ func (p *Project) DropModel(name string) string {
 	return "Model deleted successfully"
 }
 
-func (project *Project) ListViews() ([]View, error) {
-	return []View{}, nil
+func (project *Project) ListViews() (ResultSet, error) {
+	query := fmt.Sprintf("SHOW TABLES FROM %s Where table_type='VIEW';", project.Name)
+	results, err := project.Query(query, project.Name)
+	HandleError(err)
+	return results.ResultSet, nil
+}
+
+func (project *Project) GetView(name string) (map[string]interface{}, error) {
+	result, _ := project.Api.APIRequest("https://cloud.mindsdb.com/api/projects/test_sdk/views/view_dj_devops", "GET", map[string]string{})
+	return result, nil
+}
+
+func (view *View) Query(name string) (*Query, error) {
+	results, err := view.Project.Query(view.Sql, view.Project.Name)
+	HandleError(err)
+	return results, nil
 }

@@ -41,9 +41,13 @@ func main() {
 	db, _ := server.GetDatabase("test_sdk_1")
 	res, _ := db.Query("SHOW FULL TABLES")
 	fmt.Println(res.ResultSet.Columns)
+	views, _ := project.ListViews()
+	fmt.Println("VIEWS: ", views)
 	//fmt.Println(db.Tables)
 	//data, _ := db.Query("SELECT * FROM models WHERE name='model_dj'")
 	//fmt.Println(data)
+	view_index, _ := project.GetView("")
+	fmt.Println(view_index)
 	for _, table := range db.ListTables() {
 		fmt.Println(table.Name)
 	}
