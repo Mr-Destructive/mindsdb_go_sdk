@@ -49,7 +49,7 @@ func NewProject(server *Server, name string, engine string, params map[string]st
 
 func (p *Project) Query(sql, database string) (*Query, error) {
 	if database == "" {
-		database = "mndsdb"
+		database = "mindsdb"
 	}
 	data, column, err := p.Api.SqlQuery(p.Api.Session, sql, database, true)
 	if err != nil {
@@ -163,6 +163,13 @@ func (project *Project) ListViews() (ResultSet, error) {
 func (project *Project) GetView(name string) (map[string]interface{}, error) {
 	result, _ := project.Api.APIRequest("https://cloud.mindsdb.com/api/projects/test_sdk/views/view_dj_devops", "GET", map[string]string{})
 	return result, nil
+}
+
+func (v *View) DropView(name string) string {
+	query := fmt.Sprintf(`DROP VIEW %s.%s;`, v.Project.Name, name)
+	_, err := v.Project.Query(query, v.Project.Name)
+	HandleError(err)
+	return "View deleted successfully"
 }
 
 func (view *View) Query(name string) (*Query, error) {
