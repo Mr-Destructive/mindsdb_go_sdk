@@ -174,13 +174,29 @@ func ReadRowColumns(body []byte) (data []Record, columns []ColumnType, err error
 	return records, columns, nil
 }
 
-func (api *RestAPI) APIRequest(requestUrl, method string, body map[string]string) (map[string]interface{}, error) {
-	jsonStr, err := json.Marshal(body)
+func (api *RestAPI) APIRequest(database, method, endpoint string, body map[string]string) ([]byte, error) {
+	apiUrl := api.Url.String()
+	Url, err := url.Parse(apiUrl + endpoint)
+
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest(method, requestUrl, bytes.NewBuffer(jsonStr))
+	api.Url = Url
+
+	var jsonStr []byte
+	if method == "POST" {
+		jsonStr, err = json.Marshal(map[string]interface{}{
+			"context": map[string]string{"db": database},
+		})
+		if err != nil {
+			return nil, err
+		}
+	} else if method == "GET" {
+		jsonStr = nil
+	}
+
+	req, err := http.NewRequest(method, api.Url.String(), bytes.NewBuffer(jsonStr))
 	if err != nil {
 		return nil, err
 	}
@@ -202,11 +218,5 @@ func (api *RestAPI) APIRequest(requestUrl, method string, body map[string]string
 		return nil, fmt.Errorf("API call failed with status code %d", resp.StatusCode)
 	}
 
-	var result map[string]interface{}
-	err = json.Unmarshal(respBody, &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
+	return respBody, nil
 }

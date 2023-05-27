@@ -161,7 +161,12 @@ func (project *Project) ListViews() (ResultSet, error) {
 }
 
 func (project *Project) GetView(name string) (map[string]interface{}, error) {
-	result, _ := project.Api.APIRequest("https://cloud.mindsdb.com/api/projects/test_sdk/views/view_dj_devops", "GET", map[string]string{})
+	jsonResult, _ := project.Api.APIRequest("mindsdb", "GET", "https://cloud.mindsdb.com/api/projects/test_sdk/views/view_dj_devops", map[string]string{})
+	var result map[string]interface{}
+	err := json.Unmarshal(jsonResult, &result)
+	if err != nil {
+		return nil, err
+	}
 	return result, nil
 }
 
