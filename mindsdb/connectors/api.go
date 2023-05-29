@@ -182,12 +182,10 @@ func (api *RestAPI) APIRequest(database, method, endpoint string, body map[strin
 		return nil, err
 	}
 
-	api.Url = Url
-
 	var jsonStr []byte
 	if method == "POST" {
 		jsonStr, err = json.Marshal(map[string]interface{}{
-			"context": map[string]string{"db": database},
+			"database": body,
 		})
 		if err != nil {
 			return nil, err
@@ -196,7 +194,7 @@ func (api *RestAPI) APIRequest(database, method, endpoint string, body map[strin
 		jsonStr = nil
 	}
 
-	req, err := http.NewRequest(method, api.Url.String(), bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequest(method, Url.String(), bytes.NewBuffer(jsonStr))
 	if err != nil {
 		return nil, err
 	}

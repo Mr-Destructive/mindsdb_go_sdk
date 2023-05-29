@@ -19,3 +19,23 @@ func GetDatabase(api *connectors.RestAPI, database string) ([]byte, error) {
 	mindsdb.HandleError(err)
 	return resp, err
 }
+
+func CreateDatabase(api *connectors.RestAPI, body map[string]string) ([]byte, error) {
+	resp, err := api.APIRequest("", "POST", "/api/databases", body)
+	mindsdb.HandleError(err)
+	return resp, err
+}
+
+func UpdateDatabase(api *connectors.RestAPI, database string, body map[string]string) ([]byte, error) {
+	endpoint := fmt.Sprintf("/api/databases/%s", database)
+	resp, err := api.APIRequest("", "PUT", endpoint, body)
+	mindsdb.HandleError(err)
+	return resp, err
+}
+
+func DeleteDatabase(api *connectors.RestAPI, database string) ([]byte, error) {
+	endpoint := fmt.Sprintf("/api/databases/%s", database)
+	resp, err := api.APIRequest("", "DELETE", endpoint, map[string]string{})
+	mindsdb.HandleError(err)
+	return resp, err
+}
