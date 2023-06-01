@@ -7,6 +7,13 @@ import (
 	"github.com/mr-destructive/mindsdb_go_sdk/mindsdb/connectors"
 )
 
+func SqlQuery(api *connectors.RestAPI, query string) ([]byte, error) {
+	body := map[string]string{"query": query}
+	resp, err := api.APIRequest("", "POST", "/api/sql/query", body)
+	mindsdb.HandleError(err)
+    return resp, err
+}
+
 func GetProjects(api *connectors.RestAPI) ([]byte, error) {
 	resp, err := api.APIRequest("", "GET", "/api/projects", map[string]string{})
 	mindsdb.HandleError(err)

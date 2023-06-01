@@ -23,6 +23,8 @@ func NewServer(api *connectors.RestAPI) *Server {
 	}
 }
 
+const listProjectsQuery = `SELECT NAME FROM information_schema.databases;`
+
 func Connect(apiUrl, email, password string) (*connectors.RestAPI, error) {
 	api := connectors.RestAPI{}
 	hostUrl := apiUrl
@@ -82,7 +84,7 @@ func Connect(apiUrl, email, password string) (*connectors.RestAPI, error) {
 
 func (s *Server) ListDatabases() []connectors.ColumnType {
 	_, columns, err := s.Api.SqlQuery(s.Api.Session,
-		"SELECT NAME FROM information_schema.databases",
+		listProjectsQuery,
 		"information_schema.databases",
 		true,
 	)
@@ -93,10 +95,7 @@ func (s *Server) ListDatabases() []connectors.ColumnType {
 }
 
 func (s *Server) ListProjects() []*Project {
-	query := `
-		SELECT NAME FROM information_schema.databases
-		WHERE TYPE = 'project';
-	`
+	query := listProjectsQuery + `WHERE TYPE = 'project';`
 	data, _, err := s.Api.SqlQuery(s.Api.Session, query, "", true)
 	if err != nil {
 		return nil
