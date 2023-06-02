@@ -2,6 +2,7 @@ package mindsdb
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/mr-destructive/mindsdb_go_sdk/mindsdb/connectors"
 )
@@ -86,4 +87,28 @@ func getMapValue(value interface{}) map[string]interface{} {
 		return m
 	}
 	return nil
+}
+
+func (m *Model) GetStatus() bool {
+	query := fmt.Sprintf(`SELECT status FROM %s.models WHERE name = '%s';`, m.Project.Name, m.Name)
+	result, err := m.Project.Query(query, m.Project.Name)
+	HandleError(err)
+	if result.ResultSet.Rows[0].Fields[0].(string) == "complete" {
+		return true
+	}
+	return false
+
+}
+
+func (m *Model) Predict(predictColumn string, params map[string]string) *ResultSet {
+	parameters := ""
+	for k, v := range params {
+		parameters += fmt.Sprintf(`%s = '%s' AND `, k, v)
+	}
+	parameters = strings.TrimSuffix(parameters, "AND ")
+	query := fmt.Sprintf(`SELECT %s FROM %s.%s WHERE %s;`, predictColumn, m.Project.Name, m.Name, parameters)
+	data, columns, err := m.Project.Api.SqlQuery(m.Project.Api.Session, query, "", true)
+	HandleError(err)
+	resultSet := ResultSet{Columns: columns, Rows: data}
+	return &resultSet
 }

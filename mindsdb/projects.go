@@ -110,10 +110,14 @@ func (p *Project) NewModel(modelName string, predictColumn string, engine string
 	return nil, errors.New("Model already exists or failed to create Model")
 }
 
-func (p *Project) GetModel(name string) *Model {
+func (p *Project) GetModel(name string) (*Model, error) {
 	query := fmt.Sprintf(`SELECT * FROM %s.models WHERE name='%s';`, p.Name, name)
+	fmt.Println(query)
 	data, _, err := p.Api.SqlQuery(p.Api.Session, query, "", true)
 	HandleError(err)
+	if len(data) < 1 {
+		return nil, fmt.Errorf("No model found with the provided database and name %s.%s", p.Name, name)
+	}
 	result := data[0]
 	for i, row := range result.Fields {
 		if row == nil && i == 5 {
@@ -130,20 +134,7 @@ func (p *Project) GetModel(name string) *Model {
 		PredictColumn:   result.Fields[6].(string),
 		TrainingOptions: result.Fields[11].(map[string]interface{}),
 	}
-	return &model
-}
-
-func (m *Model) Predict(predictColumn string, params map[string]string) *ResultSet {
-	parameters := ""
-	for k, v := range params {
-		parameters += fmt.Sprintf(`%s = '%s' AND `, k, v)
-	}
-	parameters = strings.TrimSuffix(parameters, "AND ")
-	query := fmt.Sprintf(`SELECT %s FROM %s.%s WHERE %s;`, predictColumn, m.Project.Name, m.Name, parameters)
-	data, columns, err := m.Project.Api.SqlQuery(m.Project.Api.Session, query, "", true)
-	HandleError(err)
-	resultSet := ResultSet{Columns: columns, Rows: data}
-	return &resultSet
+	return &model, nil
 }
 
 func (p *Project) DropModel(name string) string {

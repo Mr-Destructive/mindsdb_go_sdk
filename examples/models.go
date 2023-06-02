@@ -10,11 +10,11 @@ import (
 
 func main() {
 	err := mindsdb.LoadEnvFromFile(".env")
-	PanicError(err)
+	mindsdb.HandleError(err)
 	email := os.Getenv("email")
 	password := os.Getenv("password")
 	api, err := connectors.Login(email, password)
-	PanicError(err)
+	mindsdb.HandleError(err)
 
 	server := mindsdb.Server{Api: api}
 	project, err := server.GetProject("test_sdk")
@@ -30,4 +30,17 @@ func main() {
 		panic(err)
 	}
 	fmt.Println(model)
+
+	// Get a model with name inside a project
+	model, err = project.GetModel("model_a")
+	fmt.Println(model.Status)
+	mindsdb.HandleError(err)
+
+	// Get status of a model using the object
+	model_status := model.Status
+	fmt.Println(model_status)
+
+	// Get status of a model using the object(reloaded sql query)
+	status := model.GetStatus()
+	fmt.Println(status)
 }
