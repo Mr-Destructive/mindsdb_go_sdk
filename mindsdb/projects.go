@@ -75,6 +75,7 @@ func (p *Project) NewModel(modelName string, predictColumn string, engine string
 			Name:    result.Fields[0].(string),
 			Engine:  result.Fields[1].(string),
 			Project: p,
+            Parameters: params,
 		}
 
 		var conversionErr error

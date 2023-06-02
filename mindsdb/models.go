@@ -18,6 +18,7 @@ type Model struct {
 	UpdateStatus    string
 	MindsdbVersion  string
 	TrainingOptions map[string]interface{}
+	Parameters      map[string]string
 }
 
 type ResultSet struct {
@@ -111,4 +112,20 @@ func (m *Model) Predict(predictColumn string, params map[string]string) *ResultS
 	HandleError(err)
 	resultSet := ResultSet{Columns: columns, Rows: data}
 	return &resultSet
+}
+
+func (m *Model) Retrain() (*Model, error) {
+	if m.UpdateStatus == "available" {
+		query := fmt.Sprintf(`RETRAIN %s.%s PREDICT %s USING ENGINE = '%s', %s;`, m.Project.Name, m.Name, m.PredictColumn, m.Engine, m.Parameters)
+		_, err := m.Project.Query(query, m.Project.Name)
+		if err != nil {
+			return nil, err
+		}
+		model, err := m.Project.GetModel(m.Name)
+		if err != nil {
+			return nil, err
+		}
+		return model, nil
+	}
+	return nil, nil
 }

@@ -43,4 +43,12 @@ func main() {
 	// Get status of a model using the object(reloaded sql query)
 	status := model.GetStatus()
 	fmt.Println(status)
+
+	// Retrain model if the new data is available
+	retrained_model, err := model.Retrain()
+	if retrained_model != nil {
+		fmt.Println(retrained_model)
+		// model = retrained_model
+	}
+	fmt.Println(model, err)
 }
