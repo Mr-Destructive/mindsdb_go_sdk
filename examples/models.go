@@ -51,4 +51,9 @@ func main() {
 		// model = retrained_model
 	}
 	fmt.Println(model, err)
+
+	// FineTuned Model
+	fmt.Println(model)
+	finetuned_model, err := model.FineTune("test_sdk", "SELECT * FROM test_sdk.model_b WHERE language = 'go'")
+	fmt.Println(finetuned_model, err)
 }

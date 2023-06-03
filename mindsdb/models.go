@@ -129,3 +129,16 @@ func (m *Model) Retrain() (*Model, error) {
 	}
 	return nil, nil
 }
+
+func (m *Model) FineTune(db, query string) (*Model, error) {
+	finetune_query := fmt.Sprintf(`FINETUNE %s.%s FROM %s (%s);`, m.Project.Name, m.Name, db, query)
+	_, err := m.Project.Query(finetune_query, m.Project.Name)
+	if err != nil {
+		return nil, err
+	}
+	model, err := m.Project.GetModel(m.Name)
+	if err != nil {
+		return nil, err
+	}
+	return model, nil
+}
