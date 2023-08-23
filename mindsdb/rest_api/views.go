@@ -28,6 +28,13 @@ func CreateView(api *connectors.RestAPI, project string, body map[string]string)
 	return resp, err
 }
 
+func UpdateView(api *connectors.RestAPI, project, view map[string]string) ([]byte, error) {
+	endpoint := fmt.Sprintf("/api/projects/%s/views/%s", project, view)
+	resp, err := api.APIRequest("", "PUT", endpoint, view)
+	mindsdb.HandleError(err)
+	return resp, err
+}
+
 func DeleteView(api *connectors.RestAPI, project, view string) ([]byte, error) {
 	endpoint := fmt.Sprintf("/api/projects/%s/views/%s", project, view)
 	resp, err := api.APIRequest("", "DELETE", endpoint, map[string]string{})
